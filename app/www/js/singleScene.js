@@ -35,7 +35,7 @@ var Scene = function() {
         });
 
         // Plane
-        var plane = new THREE.PlaneGeometry(800, 600, 4, 4);
+        var plane = new THREE.PlaneGeometry(4000, 3000, 4, 4);
         var mesh = new THREE.Mesh(plane, this.material);
         this.scene.add(mesh);
 
@@ -58,19 +58,19 @@ var Scene = function() {
         controls.noZoom = true;
 
 
-        function setOrientationControls(e) {
-            if (!e.alpha) {
-                return;
-            }
-
-            controls = new THREE.DeviceOrientationControls(self.camera, true);
-            controls.connect();
-            controls.update();
-
-            window.removeEventListener('deviceorientation', setOrientationControls, true);
-        }
-
-        window.addEventListener('deviceorientation', setOrientationControls, true);
+        // function setOrientationControls(e) {
+        //     if (!e.alpha) {
+        //         return;
+        //     }
+        //
+        //     controls = new THREE.DeviceOrientationControls(self.camera, true);
+        //     controls.connect();
+        //     controls.update();
+        //
+        //     window.removeEventListener('deviceorientation', setOrientationControls, true);
+        // }
+        //
+        // window.addEventListener('deviceorientation', setOrientationControls, true);
 
     };
 
