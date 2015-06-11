@@ -1,0 +1,514 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+    <title>complexity.zone - AR/VR Solar System for Google Cardboard</title>
+    <style>
+      body {
+        margin: 0px;
+        overflow: hidden;
+      }
+      a, a:link, a:visited, a:hover, a:active
+      {
+        text-decoration: inherit;
+        font-family: inherit;
+        font-size: inherit;
+        background-color: inherit;
+        color: inherit;
+        
+      }
+      #container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #000000;
+      }
+
+      #container:-webkit-full-screen { width: 100% }
+      #container:-moz-full-screen { width: 100% }
+      #container:-ms-full-screen { width: 100% }
+      #container:-o-full-screen { width: 100% }
+      #container:full-screen { width: 100% }
+
+      #webgl {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+      }
+      video {
+        position: absolute;
+        visibility: hidden;
+      }
+      #leftcam {
+        position: absolute;
+      }
+      #rightcam {
+        position: absolute;
+      }
+      #toppanel {
+        position: absolute;
+        top: 0;
+        left: 0;
+        background-color: #222222;
+      }
+      #bottompanel {
+        position: absolute;
+        left: 0;
+        background-color: #222222;
+    }
+    </style>
+    <script>
+      if ((window.location.protocol != 'file:') && (window.location.hostname != '127.0.0.1')) {
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        ga('create', 'UA-55693751-1', 'auto');
+        ga('send', 'pageview');
+      }
+    </script>
+  </head>
+  <body>
+  <div id="container">
+    <video id="video" style="visibility: hidden;" autoplay="" width="800" height="600"></video>
+    <video width="100%" height="100%" id="videoVideo" autoplay constrols style="display:none"> <!-- style="display:none" -->
+    <!--<source src="textures/Neuseeland.mp4" type='video/mp4'>-->
+        <source src="img/bigbuckbunnytrailer-480p.ogg" type="video/mp4">
+    </video>
+    <canvas id="leftcam" width="800" height="600"></canvas>
+    <canvas id="rightcam" width="800" height="600"></canvas>
+    <div id="webgl"></div>
+    <div id="toppanel"></div>
+    <div id="bottompanel"></div>
+    <div id="centerline" style="position: absolute; width: 3px; background-color: #222222;"></div>
+  </div>
+
+  <script>
+    /*
+      Thanks Mr.doob for Three.js.
+      Thanks http://planetpixelemporium.com/ for textures.
+      Thanks Google for Google Cardboard
+    */
+  </script>
+  <script src="js/three.min.js"></script>
+  <script src="js/StereoEffect.js"></script>
+  <script src="js/DeviceOrientationControls.js"></script>
+  <script src="js/navigateControl.js"></script>
+  <script src="js/tween.js"></script>
+
+  <script>
+    /*
+      complexity.zone
+      Tim Samshuijzen
+      2014
+
+      Feel free to copy and refactor the code in any way, or use parts of it in your own experiment.
+      Suggestions for improvements? Feel free to e-mail me: timsamshuijzen@gmail.com
+
+      The goal of this experiment?
+        I wanted to create an AR (or some form of Mixed Reality) experience for Google Cardboard using Web technology only.
+      Why AR?
+        I really like the concept of VR, very excited about it, but I also like the concept of AR and Mixed Reality.
+      Why Google Cardboard?
+        I like the idea of technology being available for everyone.
+      Why Web technology?
+        I really think this is the way to go.
+
+    */
+    var camera, scene, renderer, raycaster;
+    var effect, controls;
+
+    var container, divwebgl, leftcam, rightcam, toppanel, bottompanel, centerline;
+
+    // video stuff
+    var videoVideo, videoImage, videoImageContext, videoImageReflextionContext, imageReflectionGradient,
+        videoTexture, videoTextureReflection;
+
+    var screenWidth;
+    var screenHeight;
+    var screenHalfWidth;
+    var screenHalfHeight;
+    var verticalMargin;
+    var cameraImage;
+    var cameraImageContext;
+
+    var leftCamCanvas;
+    var leftCamContext;
+    var rightCamCanvas;
+    var rightCamContext;
+    var video;
+
+    var videoPlaying = false;
+    var fullScreenRequested = false;
+
+    var isMobile = ( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) ? true : false;
+    var infoFDistance = 14; // (bad method) for correcting info text position in relation to object distance
+
+    var clock = new THREE.Clock();
+
+    var lastMs = Date.now();
+    var toastCountDownMs = 0;
+    var toastQueue = [];
+
+    var setOrientationControlsDone = false;
+
+    init();
+    render();
+
+    function init() {
+
+      raycaster = new THREE.Raycaster();
+
+      renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
+      renderer.setClearColor( 0x000000, 0 );
+      divwebgl = document.getElementById('webgl');
+      divwebgl.appendChild(renderer.domElement);
+
+      container = document.getElementById('container');
+      leftcam = document.getElementById('leftcam');
+      rightcam = document.getElementById('rightcam');
+      toppanel = document.getElementById('toppanel');
+      bottompanel = document.getElementById('bottompanel');
+
+      centerline = document.getElementById('centerline');
+
+      leftCamCanvas = document.getElementById("leftcam");
+      leftCamContext = leftCamCanvas.getContext("2d");
+      rightCamCanvas = document.getElementById("rightcam");
+      rightCamContext = rightCamCanvas.getContext("2d");
+      video = document.getElementById("video");
+      sputnikVideo = document.getElementById("videoVideo");
+
+      cameraImage = document.createElement('canvas');
+      cameraImage.setAttribute("width", "640");
+      cameraImage.setAttribute("height", "480");
+      cameraImage.width = 640;
+      cameraImage.height = 480;
+      cameraImageContext = cameraImage.getContext("2d");
+
+      effect = new THREE.StereoEffect(renderer);
+
+      scene = new THREE.Scene();
+
+      camera = new THREE.PerspectiveCamera(40, 1, 10, 10000000);
+      camera.position.set(0, 1850, 0);
+      camera.up = new THREE.Vector3(0, 1, 0);
+      scene.add(camera);
+
+      // Place us somewhere between Mars and Jupiter, from above
+      var orrerySunPosition = {
+        x: 0, // forward
+        y: -20000, // up.
+        z: 60000 // right
+      };
+
+      var lCenter =  new THREE.Vector3(orrerySunPosition.x, orrerySunPosition.y, orrerySunPosition.z);
+      // Don't orbit around Sun. Look around from camera's position instead.
+      lCenter.set(
+        camera.position.x,
+        camera.position.y - 0.2,
+        camera.position.z + 0.6
+      );
+      // Default PC controls when no deviceorientation.
+      controls = new THREE.navigateControl(camera, renderer.domElement, lCenter);
+
+      function setOrientationControls(e) {
+        if (!e.alpha) {
+          return;
+        }
+        if (!setOrientationControlsDone) {
+          setOrientationControlsDone = true;
+
+          camera.position.set(0, 1850, 0);
+
+          controls = new THREE.DeviceOrientationControls(camera, true);
+          controls.connect();
+          controls.update();
+
+          container.addEventListener('click', function() { fullscreen(container); fullScreenRequested = true; }, false);
+
+          window.removeEventListener('deviceorientation', setOrientationControls);
+        }
+      }
+      if (window.DeviceOrientationEvent) {
+        window.addEventListener('deviceorientation', setOrientationControls, true);
+      }
+
+      var light;
+
+      light = new THREE.AmbientLight( 0x444444 );
+      scene.add(light);
+
+      light = new THREE.PointLight(0xffffff, 0.90);
+      light.position.set(orrerySunPosition.x, orrerySunPosition.y, orrerySunPosition.z);
+      scene.add(light);
+
+      var hideCam = false;
+      if (hideCam) {
+        var spaceGeometry = new THREE.SphereGeometry(1000000, 128, 128);
+        var spaceMaterial = new THREE.MeshBasicMaterial({color: 0x000000});
+        spaceMaterial.side = THREE.DoubleSide;
+        var spaceMesh = new THREE.Mesh(spaceGeometry, spaceMaterial);
+        scene.add(spaceMesh);
+      }
+
+      videoVideo = document.getElementById('videoVideo');
+
+      videoImage = document.createElement('canvas');
+      videoImage.width = 1920;
+      videoImage.height = 1080;
+
+      videoImageContext = videoImage.getContext('2d');
+      videoImageContext.fillStyle = '#000000';
+      videoImageContext.fillRect(0,0,1920,1080);
+
+      videoTexture = new THREE.Texture(videoVideo);
+      videoTexture.minFilter = THREE.NearestFilter;
+      videoTexture.magFilter = THREE.NearestFilter;
+      videoTexture.format = THREE.RGBFormat;
+      videoTexture.wrapS = THREE.ClampToEdgeWrapping;
+      videoTexture.wrapT = THREE.ClampToEdgeWrapping;
+
+      videoMaterial = new THREE.MeshBasicMaterial({
+         color: videoTexture,
+         overdraw: true,
+         side: THREE.DoubleSide
+      });
+
+
+      var geometry = new THREE.PlaneGeometry(1280, 768, 4, 4);
+      var plane = new THREE.Mesh( geometry, videoMaterial );
+      plane.position.x = orrerySunPosition.x; // forward
+      plane.position.y = orrerySunPosition.y; // up
+      plane.position.z = orrerySunPosition.z; // right
+      scene.add( plane );
+
+      window.addEventListener('resize', resize, false);
+      resize();
+    }
+
+    function resize() {
+      screenWidth = container.offsetWidth; //window.innerWidth;
+      screenHeight = container.offsetHeight; //window.innerHeight;
+      screenHalfWidth = ((screenWidth / 2) | 0);
+      screenHalfHeight = ((screenHeight / 2) | 0);
+      var horizontalMargin = 0;
+      // adjust margin so that we have a near 4:3 ratio.
+      verticalMargin = (((screenHeight - (screenHalfWidth / (4/3))) / 2) * 0.5) | 0;
+
+      camera.aspect = screenHalfWidth / (screenHeight - (2 * verticalMargin));
+      camera.updateProjectionMatrix();
+
+      renderer.setSize(screenWidth, (screenHeight - (2 * verticalMargin))); // the total space for the viewport
+      effect.setSizeSingleView(screenHalfWidth, (screenHeight - (2 * verticalMargin)));
+
+      var cameraImageWidth = 800; //(screenHalfWidth - (2 * horizontalMargin));
+      var cameraImageHeight = 600; //(screenHeight - (2 * verticalMargin));
+
+      cameraImage.width = cameraImageWidth;
+      cameraImage.height = cameraImageHeight;
+      cameraImage.setAttribute("width", '' + cameraImageWidth);
+      cameraImage.setAttribute("height", '' + cameraImageHeight);
+      cameraImage.style.width = cameraImageWidth + 'px';
+      cameraImage.style.height = cameraImageHeight + 'px';
+
+      leftcam.style.left = horizontalMargin + 'px';
+      leftcam.style.top = verticalMargin + 'px';
+      leftcam.width = (screenHalfWidth - (2 * horizontalMargin));
+      leftcam.height = (screenHeight - (2 * verticalMargin));
+      leftcam.style.width = (screenHalfWidth - (2 * horizontalMargin)) + 'px';
+      leftcam.style.height = (screenHeight - (2 * verticalMargin)) + 'px';
+
+      rightcam.style.left = (screenHalfWidth + horizontalMargin) + 'px';
+      rightcam.style.top = verticalMargin + 'px';
+      rightcam.width = (screenHalfWidth - (2 * horizontalMargin));
+      rightcam.height = (screenHeight - (2 * verticalMargin));
+      rightcam.style.width = (screenHalfWidth - (2 * horizontalMargin)) + 'px';
+      rightcam.style.height = (screenHeight - (2 * verticalMargin)) + 'px';
+
+      divwebgl.style.left = 0 + 'px';
+      divwebgl.style.top = verticalMargin + 'px';
+      divwebgl.style.width = screenWidth + 'px';
+      divwebgl.style.height = (screenHeight - (2 * verticalMargin)) + 'px';
+
+      toppanel.style.width = screenWidth + 'px';
+      toppanel.style.height = verticalMargin + 'px';
+
+      bottompanel.style.top = (screenHeight - verticalMargin) + 'px';
+      bottompanel.style.width = screenWidth + 'px';
+      bottompanel.style.height = verticalMargin + 'px';
+
+      centerline.style.left = (screenHalfWidth - 1) + 'px';
+      centerline.style.top = verticalMargin + 'px';
+      centerline.style.height = (screenHeight - (2 * verticalMargin)) + 'px';
+
+    }
+
+
+    var renderState = 0;
+    var planetProjectVector = new THREE.Vector3();
+    var screenCenterVector = new THREE.Vector2(0, 0);
+
+    function render() {
+      requestAnimationFrame(render);
+
+
+
+
+      camera.updateProjectionMatrix();
+      controls.update(clock.getDelta());
+
+      if (videoVideo.readyState === videoVideo.HAVE_ENOUGH_DATA) {
+            console.log("YO");
+            if (videoTexture) videoTexture.needsUpdate = true;
+        }
+      effect.render(scene, camera);
+
+      var nowMs = Date.now();
+      var deltaMs = (nowMs - lastMs);
+      lastMs = nowMs;
+
+      var lTimeSec = clock.getElapsedTime();
+
+
+      renderState++;
+      camCapture();
+
+      TWEEN.update();
+    }
+
+    function fullscreen(el) {
+      if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement ) {
+        if (el.requestFullscreen) {
+          el.requestFullscreen();
+        } else if (el.msRequestFullscreen) {
+          el.msRequestFullscreen();
+        } else if (el.mozRequestFullScreen) {
+          el.mozRequestFullScreen();
+        } else if (el.webkitRequestFullscreen) {
+          el.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+        }
+      } else {
+        var toggle = false;
+        if (toggle) {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+          } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          }
+        }
+      }
+    }
+
+    var camCaptureState = 0;
+    function camCapture() {
+      if (videoPlaying) {
+        cameraImageContext.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, 0, 0, cameraImage.width, cameraImage.height);
+        leftCamContext.drawImage(cameraImage, 0, 0, cameraImage.width, cameraImage.height, 0, 0, leftcam.width, leftcam.height);
+        rightCamContext.drawImage(cameraImage, 0, 0, cameraImage.width, cameraImage.height, 0, 0, leftcam.width, leftcam.height);
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", function() {
+      var getUserMedia = navigator.getUserMedia ? function(a, b, c) { navigator.getUserMedia(a, b, c); } : (navigator.webkitGetUserMedia ? function(a, b, c) { navigator.webkitGetUserMedia(a, b, c); } : null);
+      if (getUserMedia != null) {
+        MediaStreamTrack.getSources(function(sourceInfos) {
+          var videoSource = null;
+          // Select the rear camera. We are assuming it is the last one.
+          // TODO: assumption is the mother of all...
+          for (var i = 0; i < sourceInfos.length; i++) {
+            var sourceInfo = sourceInfos[i];
+            //console.log('source: ', sourceInfo);
+            if (sourceInfo.kind === 'video') {
+              //console.log(sourceInfo.id, sourceInfo.label || 'camera');
+              videoSource = sourceInfo.id;
+              //break; // uncomment for selecting the first one.
+            }
+          }
+
+          if (videoSource != null)
+          {
+            getUserMedia.call(this,
+              {
+                video: {
+                  optional: [
+                    { sourceId: videoSource },
+                    { minWidth: 640 },
+                    { maxWidth: 640 },
+                    { minHeight: 480 },
+                    { maxHeight: 480 }
+                  ]
+                },
+                //video: true,
+                audio: false
+              },
+              function(stream){
+                video.src = window.webkitURL.createObjectURL(stream);
+                video.play();
+
+                videoPlaying = true;
+                console.log('Video setup ok');
+                if (isMobile) {
+                  if (!fullScreenRequested) {
+                    console.log('Tap screen for full screen mode');
+                  }
+                }
+                console.log('Please wait while textures load');
+                if (isMobile) {
+                  console.log('Tip: increase your phone\'s display sleep timeout');
+                }
+              },
+              function(error) {
+                videoPlaying = false;
+                console.log("Video capture disabled");
+                if (isMobile) {
+                  if (!fullScreenRequested) {
+                    console.log('Tap screen for full screen mode');
+                  }
+                }
+                console.log('Please wait while textures load');
+                if (isMobile) {
+                  console.log('Tip: increase your phone\'s display sleep timeout');
+                }
+              }
+            );
+          } else {
+            console.log("Video capture not available");
+            if (isMobile) {
+              if (!fullScreenRequested) {
+                console.log('Tap screen for full screen mode');
+              }
+            }
+            console.log('Please wait while textures load');
+            if (isMobile) {
+              console.log('Tip: increase your phone\'s display sleep timeout');
+            }
+          }
+        });
+      } else {
+        console.log("HTML5 video not supported");
+        if (isMobile) {
+          console.log('Tap screen for full screen mode');
+        }
+        console.log('Please wait while textures load');
+        if (isMobile) {
+          console.log('Tip: increase your phone\'s display sleep timeout');
+        }
+      }
+
+    });
+
+
+
+  </script>
+  </body>
+</html>

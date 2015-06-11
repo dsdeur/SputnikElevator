@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1, minimal-ui">
+
+        <title>Sputnik Elevator</title>
+
+        <!-- Add to homescreen for Chrome on Android -->
+        <meta name="mobile-web-app-capable" content="yes">
+
+        <!-- Add to homescreen for Safari on iOS -->
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black">
+        <meta name="apple-mobile-web-app-title" content="Web Starter Kit">
+
+        <!-- Tile icon for Win8 (144x144 + tile color) -->
+        <meta name="msapplication-TileImage" content="img/coot.jpg">
+        <meta name="msapplication-TileColor" content="#3372DF">
+
+        <!-- iOS icons -->
+        <link rel="apple-touch-icon-precomposed" sizes="144x144" href="img/coot.jpg">
+        <link rel="apple-touch-icon-precomposed" sizes="114x114" href="img/coot.jpg">
+        <link rel="apple-touch-icon-precomposed" sizes="72x72" href="img/coot.jpg">
+        <link rel="apple-touch-icon-precomposed" href="img/coot.jpg">
+
+        <!-- Generic Icon -->
+        <link rel="shortcut icon" href="img/coot.jpg">
+
+        <!-- Chrome Add to Homescreen -->
+        <link rel="shortcut icon" sizes="196x196" href="images/touch/touch-icon-196x196.png">
+
+        <!-- Stylesheets -->
+        <link rel="stylesheet" href="css/app.css">
+    </head>
+    <body>
+        <video id="videoYeah" height="240" width="360" style="display:none;">
+            <source src="http://broken-links.com/tests/media/BigBuck.m4v">
+            <source src="http://broken-links.com/tests/media/BigBuck.webm" type="video/webm">
+            <source src="http://broken-links.com/tests/media/BigBuck.theora.ogv" type="video/ogg">
+        </video>
+
+        <div class="container">
+            <video id="webcam" style="visibility: hidden;" autoplay="" width="800" height="600"></video>
+            <canvas id="leftcam" width="800" height="600"></canvas>
+            <canvas id="rightcam" width="800" height="600"></canvas>
+            <div id="scene"></div>
+        </div>
+
+        <script type="text/javascript" src="cordova.js"></script>
+        <script type="text/javascript" src="js/index.js"></script>
+        <script type="text/javascript">
+            app.initialize();
+        </script>
+        <script src="js/three.min.js"></script>
+        <script src="js/DeviceOrientationControls.js"></script>
+        <script src="js/OrbitControls.js"></script>
+        <script src="js/webcam.js"></script>
+        <script src="js/singleScene.js"></script>
+        <script src="js/main.js"></script>
+    </body>
+</html>
