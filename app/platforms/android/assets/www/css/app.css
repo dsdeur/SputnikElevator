@@ -152,11 +152,20 @@ html, body{
 	border:1px solid green;
 }
 
-#scene {
+#sceneLeft {
 	position: fixed;
-	top:0;
-	right:0;
+	width: 49.5%;
+	top:17%;
 	left: 0;
+	background: rgba(0, 0, 255, .2);
+}
+
+#sceneRight {
+	position: fixed;
+	width: 49.5%;
+	top:17%;
+	right:0;
+	background: rgba(0, 0, 255, .2);
 }
 
 #form {

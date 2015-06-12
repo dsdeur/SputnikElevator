@@ -46,33 +46,33 @@ var Scene = function() {
         var rendererElement = this.renderer.domElement;
         element.appendChild(rendererElement);
 
-        // // Orbit controls
-        // this.controls = new THREE.OrbitControls(this.camera, document.body);
-        //
-        // this.controls.target.set(
-        //   this.camera.position.x + 0.15,
-        //   this.camera.position.y,
-        //   this.camera.position.z
-        // );
-        //
-        // this.controls.noPan = true;
-        // this.controls.noZoom = true;
-        //
-        //
-        // function setOrientationControls(e) {
-        //     if (!e.alpha) {
-        //         return;
-        //     }
-        //     console.log("YOYO", e, self.camera);
+        // Orbit controls
+        this.controls = new THREE.OrbitControls(this.camera, document.body);
+
+        this.controls.target.set(
+          this.camera.position.x + 0.15,
+          this.camera.position.y,
+          this.camera.position.z
+        );
+
+        this.controls.noPan = true;
+        this.controls.noZoom = true;
+
+
+        function setOrientationControls(e) {
+            if (!e.alpha) {
+                return;
+            }
+            console.log("YOYO", e, self.camera);
 
             this.controls = new THREE.DeviceOrientationControls(self.camera, true);
             this.controls.connect();
             this.controls.update();
-        //
-        //     window.removeEventListener('deviceorientation', setOrientationControls, true);
-        // }
-        //
-        // window.addEventListener('deviceorientation', setOrientationControls, true);
+
+            window.removeEventListener('deviceorientation', setOrientationControls, true);
+        }
+
+        window.addEventListener('deviceorientation', setOrientationControls, true);
 
         this.clock = new THREE.Clock();
     };

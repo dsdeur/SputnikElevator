@@ -1,14 +1,14 @@
 var Scene = function() {
     var self = this;
 
-    this.init = function(element) {
-        this.camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 1, 100000);
+    this.init = function(element, video) {
+        this.camera = new THREE.PerspectiveCamera(45, (window.innerWidth/2)/this.calculateHeight(window.innerWidth/2), 1, 100000);
         this.camera.position.z = 2000;
 
         this.scene = new THREE.Scene();
 
         // Init video
-        this.video = document.getElementById('videoYeah');
+        this.video = video;
 
         // Canvas
         this.image = document.createElement('canvas');
@@ -35,50 +35,53 @@ var Scene = function() {
         });
 
         // Plane
-        var plane = new THREE.PlaneGeometry(4000, 3000, 4, 4);
+        var plane = new THREE.PlaneGeometry(1600, 1200, 4, 4);
         var mesh = new THREE.Mesh(plane, this.material);
+        mesh.position.z = 100;
         this.scene.add(mesh);
 
         // Renderer
         this.renderer = new THREE.WebGLRenderer({ alpha: true });
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.setSize(window.innerWidth/2, this.calculateHeight(window.innerWidth/2));
         var rendererElement = this.renderer.domElement;
         element.appendChild(rendererElement);
 
-        // Orbit controls
-        var controls = new THREE.OrbitControls(this.camera, rendererElement);
-
-        controls.target.set(
-          this.camera.position.x + 0.15,
-          this.camera.position.y,
-          this.camera.position.z
-        );
-
-        controls.noPan = true;
-        controls.noZoom = true;
-
-
+        // // Orbit controls
+        // this.controls = new THREE.OrbitControls(this.camera, document.body);
+        //
+        // this.controls.target.set(
+        //   this.camera.position.x + 0.15,
+        //   this.camera.position.y,
+        //   this.camera.position.z
+        // );
+        //
+        // this.controls.noPan = true;
+        // this.controls.noZoom = true;
+        //
+        //
         // function setOrientationControls(e) {
         //     if (!e.alpha) {
         //         return;
         //     }
-        //
-        //     controls = new THREE.DeviceOrientationControls(self.camera, true);
-        //     controls.connect();
-        //     controls.update();
+        //     console.log("YOYO", e, self.camera);
+
+            this.controls = new THREE.DeviceOrientationControls(self.camera, true);
+            this.controls.connect();
+            this.controls.update();
         //
         //     window.removeEventListener('deviceorientation', setOrientationControls, true);
         // }
         //
         // window.addEventListener('deviceorientation', setOrientationControls, true);
 
+        this.clock = new THREE.Clock();
     };
 
     this.onWindowResize = function() {
-        this.camera.aspect = window.innerWidth / window.innerHeight;
-        this.camera.updateProjectionMatrix();
+        self.camera.aspect = (window.innerWidth/2)/ self.calculateHeight(window.innerWidth/2);
+        self.camera.updateProjectionMatrix();
 
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        self.renderer.setSize((window.innerWidth/2), self.calculateHeight(window.innerWidth/2));
     };
 
     this.render = function() {
@@ -86,6 +89,14 @@ var Scene = function() {
             if(self.texture) self.texture.needsUpdate = true;
         }
 
+        self.camera.updateProjectionMatrix();
+        self.controls.update(self.clock.getDelta());
+
         self.renderer.render(self.scene, self.camera);
     };
+
+    this.calculateHeight = function(width) {
+        var height = (width * 600) / 800;
+        return height;
+    }
 }

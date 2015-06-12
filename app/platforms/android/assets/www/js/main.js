@@ -1,4 +1,8 @@
-var sceneContainer = document.getElementById('scene');
+var sceneLeftContainer = document.getElementById('sceneLeft');
+var sceneRightContainer = document.getElementById('sceneRight');
+
+var videoLeft = document.getElementById('videoLeft');
+var videoRight = document.getElementById('videoRight');
 
 
 // Init webcams
@@ -7,24 +11,37 @@ webcams.init();
 
 
 // Init Scene
-var scene = new Scene();
+var sceneLeft = new Scene();
+var sceneRight = new Scene();
 
+// 
+// window.onresize = function() {
+//     console.log("RESIZE");
+//     sceneLeft.onWindowResize();
+//     sceneRight.onWindowResize();
+// }
 
 // Render
 function render() {
     requestAnimationFrame(render);
     webcams.render();
-    scene.render();
+    sceneLeft.render();
+    sceneRight.render();
 }
 
-var videoYeah = document.getElementById('videoYeah');
 document.body.addEventListener('click', play, false);
 
 function play() {
-    videoYeah.src = 'http://broken-links.com/tests/media/BigBuck.m4v';
-    videoYeah.setAttribute('crossorigin', 'anonymous');
-    videoYeah.load();
-    videoYeah.play();
-    scene.init(sceneContainer);
-    render();
+    videoLeft.setAttribute('crossorigin', 'anonymous');
+    videoRight.setAttribute('crossorigin', 'anonymous');
+
+    videoLeft.play();
+    videoRight.play();
+
+    setTimeout(function(){
+        sceneLeft.init(sceneLeftContainer, videoLeft);
+        sceneRight.init(sceneRightContainer, videoRight);
+        render();
+    }, 100);
+    document.body.removeEventListener('click', play);
 }
