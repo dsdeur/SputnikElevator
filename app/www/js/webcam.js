@@ -14,50 +14,17 @@ var Webcams = function() {
 
 
 	this.init = function() {
-		var getUserMedia = navigator.getUserMedia ? function(a, b, c) { navigator.getUserMedia(a, b, c); } : (navigator.webkitGetUserMedia ? function(a, b, c) { navigator.webkitGetUserMedia(a, b, c); } : null);
-		if (getUserMedia != null) {
-			MediaStreamTrack.getSources(function(sourceInfos) {
-				var videoSource = null;
-				// Select the rear camera. We are assuming it is the last one.
-				// TODO: assumption is the mother of all...
-				for (var i = 0; i < sourceInfos.length; i++) {
-					var sourceInfo = sourceInfos[i];
-					//console.log('source: ', sourceInfo);
-					if (sourceInfo.kind === 'video') {
-						//console.log(sourceInfo.id, sourceInfo.label || 'camera');
-						videoSource = sourceInfo.id;
-						//break; // uncomment for selecting the first one.
-					}
-				}
+		// have to call initialize function with canvas object
+		cordova.plugins.CanvasCamera.initialize(webcamImage);
+		var options = {
+	        quality: 75,
+	        destinationType: CanvasCamera.DestinationType.DATA_URL,
+	        encodingType: CanvasCamera.EncodingType.JPEG,
+	        width: 640,
+	        height: 480
+	    };
 
-				if (videoSource != null) {
-					getUserMedia.call(this, {
-							video: {
-								optional: [
-								{ sourceId: videoSource },
-								{ minWidth: 640 },
-								{ maxWidth: 640 },
-								{ minHeight: 480 },
-								{ maxHeight: 480 }
-								]
-							},
-							//video: true,
-							audio: false
-						},
-						function(stream){
-							this.webcam.src = window.webkitURL.createObjectURL(stream);
-							this.webcam.play();
-						},
-						function(error) {
-							console.log("Video capture disabled");
-						});
-				} else {
-					console.log("Video capture not available");
-				}
-			});
-		} else {
-			console.log("HTML5 video not supported");
-		}
+		cordova.plugins.CanvasCamera.start(options);
 	};
 
 	this.render = function() {

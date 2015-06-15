@@ -100,11 +100,11 @@ THREE.DeviceOrientationControls = function(object) {
       //}
 
       this.alpha = deviceOrientation.gamma ?
-        THREE.Math.degToRad(deviceOrientation.alpha) : 0; // Z
+        THREE.Math.degToRad(deviceOrientation.alpha + parseInt(window.alphaOffset)) :  THREE.Math.degToRad(parseInt(window.alphaOffset)); // Z
       this.beta = deviceOrientation.beta ?
-        THREE.Math.degToRad(deviceOrientation.beta) : 0; // X'
+        THREE.Math.degToRad(deviceOrientation.beta + parseInt(window.betaOffset)) : THREE.Math.degToRad(parseInt(window.betaOffset)); // X'
       this.gamma = deviceOrientation.gamma ?
-        THREE.Math.degToRad(deviceOrientation.gamma) : 0; // Y''
+        THREE.Math.degToRad(deviceOrientation.gamma + parseInt(window.gammaOffset)) : THREE.Math.degToRad(parseInt(window.gammaOffset)); // Y''
       this.orient = screenOrientation ?
         THREE.Math.degToRad(screenOrientation) : 0; // O
 
