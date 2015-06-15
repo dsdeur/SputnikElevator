@@ -43,11 +43,13 @@ var Scene = function() {
         this.sphere = new THREE.Mesh(this.sphereGeometry, this.material);
         this.sceneRTT.add(this.sphere);
 
+        this.sphere.rotation.x = 90;
+
         this.textureRTT = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter, format: THREE.RGBFormat } );
         this.materialRTT =  new THREE.MeshBasicMaterial({map:this.textureRTT} );
 
 
-        this.planeGeometry =  new THREE.PlaneBufferGeometry( window.innerWidth / 2, window.innerHeight );
+        this.planeGeometry =  new THREE.PlaneBufferGeometry( window.innerHeight * 0.4285714286, window.innerHeight );
 
         this.plane  = new THREE.Mesh( this.planeGeometry, this.materialRTT );
         this.scene.add(this.plane);

@@ -1,8 +1,7 @@
 var sceneLeftContainer = document.getElementById('sceneLeft');
 var sceneRightContainer = document.getElementById('sceneRight');
 
-var videoLeft = document.getElementById('videoLeft');
-var videoRight = document.getElementById('videoRight');
+var video = document.getElementById('video');
 
 
 window.alphaOffset = 0;
@@ -15,8 +14,7 @@ webcams.init();
 
 var socket = new DSocket('ws://145.93.36.186:7894', {
     'start': function() {
-        videoLeft.play();
-        videoRight.play();
+        video.play();
     },
     'new_orientation': function(data) {
         window.alphaOffset = data['orientation']
@@ -46,17 +44,16 @@ function render() {
 document.body.addEventListener('click', play, false);
 
 function play() {
-    videoLeft.setAttribute('crossorigin', 'anonymous');
-    videoRight.setAttribute('crossorigin', 'anonymous');
+    video.setAttribute('crossorigin', 'anonymous');
 
-    videoLeft.play();
-    videoRight.play();
-    videoLeft.pause();
-    videoRight.pause();
+    video.play();
+
+    // videoLeft.pause();
+    // videoRight.pause();
 
     setTimeout(function(){
-        sceneLeft.init(sceneLeftContainer, videoLeft);
-        sceneRight.init(sceneRightContainer, videoRight);
+        sceneLeft.init(sceneLeftContainer, video);
+        sceneRight.init(sceneRightContainer, video);
         render();
     }, 100);
     document.body.removeEventListener('click', play);
