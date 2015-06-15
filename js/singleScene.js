@@ -3,8 +3,10 @@ var Scene = function() {
 
     this.init = function(element, video) {
         this.camera = new THREE.PerspectiveCamera(45, (window.innerWidth/2)/this.calculateHeight(window.innerWidth/2), 1, 100000);
-        this.camera.position.z = 2000;
+        this.cameraRTT = new THREE.PerspectiveCamera(45, (window.innerWidth/2)/this.calculateHeight(window.innerWidth/2), 1, 100000);
 
+
+        this.sceneRTT = new THREE.Scene();
         this.scene = new THREE.Scene();
 
         // Init video
@@ -31,14 +33,29 @@ var Scene = function() {
         // Material
         this.material = new THREE.MeshBasicMaterial({
             map: this.texture,
-            overdraw: true
+            overdraw: true,
+            side: THREE.BackSide
         });
 
+
         // Plane
-        var plane = new THREE.PlaneGeometry(1600, 1200, 4, 4);
-        var mesh = new THREE.Mesh(plane, this.material);
-        mesh.position.z = 100;
-        this.scene.add(mesh);
+        this.sphereGeometry = new THREE.SphereGeometry(100, 32, 32);
+        this.sphere = new THREE.Mesh(this.sphereGeometry, this.material);
+        this.sceneRTT.add(this.sphere);
+
+        this.textureRTT = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter, format: THREE.RGBFormat } );
+        this.materialRTT =  new THREE.MeshBasicMaterial({map:this.textureRTT} );
+
+
+        this.planeGeometry =  new THREE.PlaneBufferGeometry( window.innerWidth / 2, window.innerHeight );
+
+        this.plane  = new THREE.Mesh( this.planeGeometry, this.materialRTT );
+        this.scene.add(this.plane);
+
+        this.plane.position.z = -500;
+
+
+
 
         // Renderer
         this.renderer = new THREE.WebGLRenderer({ alpha: true });
@@ -46,33 +63,35 @@ var Scene = function() {
         var rendererElement = this.renderer.domElement;
         element.appendChild(rendererElement);
 
+
+
         // // Orbit controls
-        // this.controls = new THREE.OrbitControls(this.camera, document.body);
-        //
-        // this.controls.target.set(
-        //   this.camera.position.x + 0.15,
-        //   this.camera.position.y,
-        //   this.camera.position.z
-        // );
-        //
-        // this.controls.noPan = true;
-        // this.controls.noZoom = true;
-        //
-        //
-        // function setOrientationControls(e) {
-        //     if (!e.alpha) {
-        //         return;
-        //     }
-        //     console.log("YOYO", e, self.camera);
+        this.controls = new THREE.OrbitControls(this.camera, document.body);
+        
+        this.controls.target.set(
+          this.camera.position.x + 0.15,
+          this.camera.position.y,
+          this.camera.position.z
+        );
+        
+        this.controls.noPan = true;
+        this.controls.noZoom = true;
+        
+        
+        function setOrientationControls(e) {
+            if (!e.alpha) {
+                return;
+            }
+            console.log("YOYO", e, self.camera);
 
             this.controls = new THREE.DeviceOrientationControls(self.camera, true);
             this.controls.connect();
             this.controls.update();
 
-        //     window.removeEventListener('deviceorientation', setOrientationControls, true);
-        // }
-        //
-        // window.addEventListener('deviceorientation', setOrientationControls, true);
+            window.removeEventListener('deviceorientation', setOrientationControls, true);
+        }
+        
+        window.addEventListener('deviceorientation', setOrientationControls, true);
 
         this.clock = new THREE.Clock();
     };
@@ -92,6 +111,10 @@ var Scene = function() {
         self.camera.updateProjectionMatrix();
         self.controls.update(self.clock.getDelta());
 
+
+
+        self.renderer.render(self.sceneRTT, self.cameraRTT,self.textureRTT,true);
+        
         self.renderer.render(self.scene, self.camera);
     };
 
